@@ -29,8 +29,12 @@ mixin _$TripModel {
   DateTime? get endDate => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   LocationDetailModel get start => throw _privateConstructorUsedError;
-  LocationDetailModel get end => throw _privateConstructorUsedError;
+  LocationDetailModel get end =>
+      throw _privateConstructorUsedError; // Suporta ambos: "route" ou "route_info"
+  @JsonKey(name: 'route')
   RouteInfoModel? get route => throw _privateConstructorUsedError;
+  @JsonKey(name: 'route_info')
+  RouteInfoModel? get routeInfo => throw _privateConstructorUsedError;
   @JsonKey(name: 'estimate_route')
   RouteInfoModel? get estimateRoute => throw _privateConstructorUsedError;
   DriverModel? get driver => throw _privateConstructorUsedError;
@@ -59,7 +63,8 @@ abstract class $TripModelCopyWith<$Res> {
     String status,
     LocationDetailModel start,
     LocationDetailModel end,
-    RouteInfoModel? route,
+    @JsonKey(name: 'route') RouteInfoModel? route,
+    @JsonKey(name: 'route_info') RouteInfoModel? routeInfo,
     @JsonKey(name: 'estimate_route') RouteInfoModel? estimateRoute,
     DriverModel? driver,
     @JsonKey(name: 'provider') ProviderModel? provider,
@@ -68,6 +73,7 @@ abstract class $TripModelCopyWith<$Res> {
   $LocationDetailModelCopyWith<$Res> get start;
   $LocationDetailModelCopyWith<$Res> get end;
   $RouteInfoModelCopyWith<$Res>? get route;
+  $RouteInfoModelCopyWith<$Res>? get routeInfo;
   $RouteInfoModelCopyWith<$Res>? get estimateRoute;
   $DriverModelCopyWith<$Res>? get driver;
   $ProviderModelCopyWith<$Res>? get provider;
@@ -95,6 +101,7 @@ class _$TripModelCopyWithImpl<$Res, $Val extends TripModel>
     Object? start = null,
     Object? end = null,
     Object? route = freezed,
+    Object? routeInfo = freezed,
     Object? estimateRoute = freezed,
     Object? driver = freezed,
     Object? provider = freezed,
@@ -128,6 +135,10 @@ class _$TripModelCopyWithImpl<$Res, $Val extends TripModel>
             route: freezed == route
                 ? _value.route
                 : route // ignore: cast_nullable_to_non_nullable
+                      as RouteInfoModel?,
+            routeInfo: freezed == routeInfo
+                ? _value.routeInfo
+                : routeInfo // ignore: cast_nullable_to_non_nullable
                       as RouteInfoModel?,
             estimateRoute: freezed == estimateRoute
                 ? _value.estimateRoute
@@ -177,6 +188,20 @@ class _$TripModelCopyWithImpl<$Res, $Val extends TripModel>
 
     return $RouteInfoModelCopyWith<$Res>(_value.route!, (value) {
       return _then(_value.copyWith(route: value) as $Val);
+    });
+  }
+
+  /// Create a copy of TripModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RouteInfoModelCopyWith<$Res>? get routeInfo {
+    if (_value.routeInfo == null) {
+      return null;
+    }
+
+    return $RouteInfoModelCopyWith<$Res>(_value.routeInfo!, (value) {
+      return _then(_value.copyWith(routeInfo: value) as $Val);
     });
   }
 
@@ -239,7 +264,8 @@ abstract class _$$TripModelImplCopyWith<$Res>
     String status,
     LocationDetailModel start,
     LocationDetailModel end,
-    RouteInfoModel? route,
+    @JsonKey(name: 'route') RouteInfoModel? route,
+    @JsonKey(name: 'route_info') RouteInfoModel? routeInfo,
     @JsonKey(name: 'estimate_route') RouteInfoModel? estimateRoute,
     DriverModel? driver,
     @JsonKey(name: 'provider') ProviderModel? provider,
@@ -251,6 +277,8 @@ abstract class _$$TripModelImplCopyWith<$Res>
   $LocationDetailModelCopyWith<$Res> get end;
   @override
   $RouteInfoModelCopyWith<$Res>? get route;
+  @override
+  $RouteInfoModelCopyWith<$Res>? get routeInfo;
   @override
   $RouteInfoModelCopyWith<$Res>? get estimateRoute;
   @override
@@ -280,6 +308,7 @@ class __$$TripModelImplCopyWithImpl<$Res>
     Object? start = null,
     Object? end = null,
     Object? route = freezed,
+    Object? routeInfo = freezed,
     Object? estimateRoute = freezed,
     Object? driver = freezed,
     Object? provider = freezed,
@@ -314,6 +343,10 @@ class __$$TripModelImplCopyWithImpl<$Res>
             ? _value.route
             : route // ignore: cast_nullable_to_non_nullable
                   as RouteInfoModel?,
+        routeInfo: freezed == routeInfo
+            ? _value.routeInfo
+            : routeInfo // ignore: cast_nullable_to_non_nullable
+                  as RouteInfoModel?,
         estimateRoute: freezed == estimateRoute
             ? _value.estimateRoute
             : estimateRoute // ignore: cast_nullable_to_non_nullable
@@ -341,7 +374,8 @@ class _$TripModelImpl extends _TripModel {
     required this.status,
     required this.start,
     required this.end,
-    this.route,
+    @JsonKey(name: 'route') this.route,
+    @JsonKey(name: 'route_info') this.routeInfo,
     @JsonKey(name: 'estimate_route') this.estimateRoute,
     this.driver,
     @JsonKey(name: 'provider') this.provider,
@@ -365,8 +399,13 @@ class _$TripModelImpl extends _TripModel {
   final LocationDetailModel start;
   @override
   final LocationDetailModel end;
+  // Suporta ambos: "route" ou "route_info"
   @override
+  @JsonKey(name: 'route')
   final RouteInfoModel? route;
+  @override
+  @JsonKey(name: 'route_info')
+  final RouteInfoModel? routeInfo;
   @override
   @JsonKey(name: 'estimate_route')
   final RouteInfoModel? estimateRoute;
@@ -378,7 +417,7 @@ class _$TripModelImpl extends _TripModel {
 
   @override
   String toString() {
-    return 'TripModel(scheduleAt: $scheduleAt, startDate: $startDate, endDate: $endDate, status: $status, start: $start, end: $end, route: $route, estimateRoute: $estimateRoute, driver: $driver, provider: $provider)';
+    return 'TripModel(scheduleAt: $scheduleAt, startDate: $startDate, endDate: $endDate, status: $status, start: $start, end: $end, route: $route, routeInfo: $routeInfo, estimateRoute: $estimateRoute, driver: $driver, provider: $provider)';
   }
 
   @override
@@ -395,6 +434,8 @@ class _$TripModelImpl extends _TripModel {
             (identical(other.start, start) || other.start == start) &&
             (identical(other.end, end) || other.end == end) &&
             (identical(other.route, route) || other.route == route) &&
+            (identical(other.routeInfo, routeInfo) ||
+                other.routeInfo == routeInfo) &&
             (identical(other.estimateRoute, estimateRoute) ||
                 other.estimateRoute == estimateRoute) &&
             (identical(other.driver, driver) || other.driver == driver) &&
@@ -413,6 +454,7 @@ class _$TripModelImpl extends _TripModel {
     start,
     end,
     route,
+    routeInfo,
     estimateRoute,
     driver,
     provider,
@@ -440,7 +482,8 @@ abstract class _TripModel extends TripModel {
     required final String status,
     required final LocationDetailModel start,
     required final LocationDetailModel end,
-    final RouteInfoModel? route,
+    @JsonKey(name: 'route') final RouteInfoModel? route,
+    @JsonKey(name: 'route_info') final RouteInfoModel? routeInfo,
     @JsonKey(name: 'estimate_route') final RouteInfoModel? estimateRoute,
     final DriverModel? driver,
     @JsonKey(name: 'provider') final ProviderModel? provider,
@@ -464,9 +507,13 @@ abstract class _TripModel extends TripModel {
   @override
   LocationDetailModel get start;
   @override
-  LocationDetailModel get end;
+  LocationDetailModel get end; // Suporta ambos: "route" ou "route_info"
   @override
+  @JsonKey(name: 'route')
   RouteInfoModel? get route;
+  @override
+  @JsonKey(name: 'route_info')
+  RouteInfoModel? get routeInfo;
   @override
   @JsonKey(name: 'estimate_route')
   RouteInfoModel? get estimateRoute;

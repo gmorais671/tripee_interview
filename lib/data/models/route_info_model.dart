@@ -1,9 +1,23 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'location_model.dart';
+import 'package:tripee_interview/domain/entities/location.dart';
 import '../../domain/entities/route_info.dart';
 
 part 'route_info_model.freezed.dart';
 part 'route_info_model.g.dart';
+
+@freezed
+class CoordinatesModel with _$CoordinatesModel {
+  const factory CoordinatesModel({
+    required double lat,
+    required double lng,
+  }) = _CoordinatesModel;
+
+  factory CoordinatesModel.fromJson(Map<String, dynamic> json) =>
+      _$CoordinatesModelFromJson(json);
+
+  const CoordinatesModel._();
+  Coordinates toEntity() => Coordinates(lat: lat, lng: lng);
+}
 
 @freezed
 class BoundsModel with _$BoundsModel {
@@ -26,9 +40,9 @@ class BoundsModel with _$BoundsModel {
 class RouteInfoModel with _$RouteInfoModel {
   const factory RouteInfoModel({
     String? polyline,
+    @JsonKey(name: 'distance_meters') int? distance,
+    @JsonKey(name: 'duration_seconds') int? duration,
     BoundsModel? bounds,
-    int? distance,
-    int? duration,
   }) = _RouteInfoModel;
 
   factory RouteInfoModel.fromJson(Map<String, dynamic> json) =>

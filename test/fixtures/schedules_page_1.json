@@ -1,0 +1,29 @@
+{
+  "data": [
+    {
+      "id": "10",
+      "schedule_at": "2026-05-07T05:00:00.000Z",
+      "start_address": "Av. Paulista, 1000 — Bela Vista",
+      "end_address": "Rua Oscar Freire, 300 — Jardins",
+      "status": "confirmed"
+    },
+    {
+      "id": "11",
+      "schedule_at": "2026-05-07T06:30:00.000Z",
+      "start_address": "Rua Augusta, 450 — Consolação",
+      "end_address": "Praça da Sé, s/n — Sé",
+      "status": "completed"
+    },
+    {
+      "id": "12",
+      "schedule_at": "2026-05-07T04:15:00.000Z",
+      "start_address": "Rua da Consolação, 2000 — Consolação",
+      "end_address": "Av. Brigadeiro, 1200 — Jardim Paulista",
+      "status": "pending"
+    }
+  ],
+  "page": 1,
+  "limit": 15,
+  "total": 3,
+  "total_pages": 1
+}

@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'location_model.dart';
-import 'route_info_model.dart';
-import 'driver_model.dart';
-import 'provider_model.dart';
-import '../../domain/entities/trip.dart';
+import 'package:tripee_interview/data/models/driver_model.dart';
+import 'package:tripee_interview/data/models/location_model.dart';
+import 'package:tripee_interview/data/models/provider_model.dart';
+import 'package:tripee_interview/data/models/route_info_model.dart';
+import 'package:tripee_interview/domain/entities/trip.dart';
 
 part 'trip_model.freezed.dart';
 part 'trip_model.g.dart';
@@ -17,7 +17,11 @@ class TripModel with _$TripModel {
     required String status,
     required LocationDetailModel start,
     required LocationDetailModel end,
-    RouteInfoModel? route,
+
+    // Suporta ambos: "route" ou "route_info"
+    @JsonKey(name: 'route') RouteInfoModel? route,
+    @JsonKey(name: 'route_info') RouteInfoModel? routeInfo,
+
     @JsonKey(name: 'estimate_route') RouteInfoModel? estimateRoute,
     DriverModel? driver,
     @JsonKey(name: 'provider') ProviderModel? provider,
@@ -27,6 +31,9 @@ class TripModel with _$TripModel {
       _$TripModelFromJson(json);
 
   const TripModel._();
+
+  RouteInfoModel? get effectiveRoute => route ?? routeInfo;
+
   Trip toEntity() => Trip(
         scheduleAt: scheduleAt,
         startDate: startDate,
@@ -34,7 +41,7 @@ class TripModel with _$TripModel {
         status: status,
         start: start.toEntity(),
         end: end.toEntity(),
-        route: route?.toEntity(),
+        route: effectiveRoute?.toEntity(),
         estimateRoute: estimateRoute?.toEntity(),
         driver: driver?.toEntity(),
         provider: provider?.toEntity(),

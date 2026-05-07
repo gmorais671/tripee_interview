@@ -1,0 +1,48 @@
+{
+  "id": "10",
+  "schedule_at": "2026-05-07T05:00:00.000Z",
+  "start_date": "2026-05-07T05:00:00.000Z",
+  "end_date": "2026-05-07T05:40:00.000Z",
+  "status": "confirmed",
+  "start": {
+    "address": "Av. Paulista, 1000 — Bela Vista, São Paulo - SP",
+    "neighborhood": "Bela Vista",
+    "city": "São Paulo",
+    "state": "SP",
+    "country": "Brasil",
+    "zipcode": "01310-100",
+    "coordinates": { "lat": -23.561500, "lng": -46.655000 }
+  },
+  "end": {
+    "address": "Rua Oscar Freire, 300 — Jardins, São Paulo - SP",
+    "neighborhood": "Jardins",
+    "city": "São Paulo",
+    "state": "SP",
+    "country": "Brasil",
+    "zipcode": "01426-001",
+    "coordinates": { "lat": -23.561800, "lng": -46.661000 }
+  },
+  "route_info": {
+    "distance_meters": 1200,
+    "duration_seconds": 900,
+    "polyline": "sv{~F`k}uO?_@??_@A@",
+    "bounds": {
+      "northeast": { "lat": -23.5615, "lng": -46.6550 },
+      "southwest": { "lat": -23.5618, "lng": -46.6610 }
+    }
+  },
+  "driver": {
+    "id": "d_100",
+    "name": "Carlos Silva",
+    "car": "Toyota Corolla",
+    "plate": "ABC1D23",
+    "photo": "https://example.com/driver/carlos_silva.jpg"
+  },
+  "provider": {
+    "id": "p_1",
+    "name": "Tripee",
+    "category": "standard",
+    "logo": "https://example.com/provider/tripee_logo.png"
+  },
+  "notes": "Cliente pediu via app para evitar avenidas principais"
+}

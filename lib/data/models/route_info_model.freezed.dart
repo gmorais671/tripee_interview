@@ -15,6 +15,179 @@ final _privateConstructorUsedError = UnsupportedError(
   'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
 );
 
+CoordinatesModel _$CoordinatesModelFromJson(Map<String, dynamic> json) {
+  return _CoordinatesModel.fromJson(json);
+}
+
+/// @nodoc
+mixin _$CoordinatesModel {
+  double get lat => throw _privateConstructorUsedError;
+  double get lng => throw _privateConstructorUsedError;
+
+  /// Serializes this CoordinatesModel to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of CoordinatesModel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $CoordinatesModelCopyWith<CoordinatesModel> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $CoordinatesModelCopyWith<$Res> {
+  factory $CoordinatesModelCopyWith(
+    CoordinatesModel value,
+    $Res Function(CoordinatesModel) then,
+  ) = _$CoordinatesModelCopyWithImpl<$Res, CoordinatesModel>;
+  @useResult
+  $Res call({double lat, double lng});
+}
+
+/// @nodoc
+class _$CoordinatesModelCopyWithImpl<$Res, $Val extends CoordinatesModel>
+    implements $CoordinatesModelCopyWith<$Res> {
+  _$CoordinatesModelCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of CoordinatesModel
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? lat = null, Object? lng = null}) {
+    return _then(
+      _value.copyWith(
+            lat: null == lat
+                ? _value.lat
+                : lat // ignore: cast_nullable_to_non_nullable
+                      as double,
+            lng: null == lng
+                ? _value.lng
+                : lng // ignore: cast_nullable_to_non_nullable
+                      as double,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$CoordinatesModelImplCopyWith<$Res>
+    implements $CoordinatesModelCopyWith<$Res> {
+  factory _$$CoordinatesModelImplCopyWith(
+    _$CoordinatesModelImpl value,
+    $Res Function(_$CoordinatesModelImpl) then,
+  ) = __$$CoordinatesModelImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({double lat, double lng});
+}
+
+/// @nodoc
+class __$$CoordinatesModelImplCopyWithImpl<$Res>
+    extends _$CoordinatesModelCopyWithImpl<$Res, _$CoordinatesModelImpl>
+    implements _$$CoordinatesModelImplCopyWith<$Res> {
+  __$$CoordinatesModelImplCopyWithImpl(
+    _$CoordinatesModelImpl _value,
+    $Res Function(_$CoordinatesModelImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of CoordinatesModel
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? lat = null, Object? lng = null}) {
+    return _then(
+      _$CoordinatesModelImpl(
+        lat: null == lat
+            ? _value.lat
+            : lat // ignore: cast_nullable_to_non_nullable
+                  as double,
+        lng: null == lng
+            ? _value.lng
+            : lng // ignore: cast_nullable_to_non_nullable
+                  as double,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$CoordinatesModelImpl extends _CoordinatesModel {
+  const _$CoordinatesModelImpl({required this.lat, required this.lng})
+    : super._();
+
+  factory _$CoordinatesModelImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CoordinatesModelImplFromJson(json);
+
+  @override
+  final double lat;
+  @override
+  final double lng;
+
+  @override
+  String toString() {
+    return 'CoordinatesModel(lat: $lat, lng: $lng)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$CoordinatesModelImpl &&
+            (identical(other.lat, lat) || other.lat == lat) &&
+            (identical(other.lng, lng) || other.lng == lng));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, lat, lng);
+
+  /// Create a copy of CoordinatesModel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$CoordinatesModelImplCopyWith<_$CoordinatesModelImpl> get copyWith =>
+      __$$CoordinatesModelImplCopyWithImpl<_$CoordinatesModelImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$CoordinatesModelImplToJson(this);
+  }
+}
+
+abstract class _CoordinatesModel extends CoordinatesModel {
+  const factory _CoordinatesModel({
+    required final double lat,
+    required final double lng,
+  }) = _$CoordinatesModelImpl;
+  const _CoordinatesModel._() : super._();
+
+  factory _CoordinatesModel.fromJson(Map<String, dynamic> json) =
+      _$CoordinatesModelImpl.fromJson;
+
+  @override
+  double get lat;
+  @override
+  double get lng;
+
+  /// Create a copy of CoordinatesModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$CoordinatesModelImplCopyWith<_$CoordinatesModelImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 BoundsModel _$BoundsModelFromJson(Map<String, dynamic> json) {
   return _BoundsModel.fromJson(json);
 }
@@ -229,9 +402,11 @@ RouteInfoModel _$RouteInfoModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$RouteInfoModel {
   String? get polyline => throw _privateConstructorUsedError;
-  BoundsModel? get bounds => throw _privateConstructorUsedError;
+  @JsonKey(name: 'distance_meters')
   int? get distance => throw _privateConstructorUsedError;
+  @JsonKey(name: 'duration_seconds')
   int? get duration => throw _privateConstructorUsedError;
+  BoundsModel? get bounds => throw _privateConstructorUsedError;
 
   /// Serializes this RouteInfoModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -252,9 +427,9 @@ abstract class $RouteInfoModelCopyWith<$Res> {
   @useResult
   $Res call({
     String? polyline,
+    @JsonKey(name: 'distance_meters') int? distance,
+    @JsonKey(name: 'duration_seconds') int? duration,
     BoundsModel? bounds,
-    int? distance,
-    int? duration,
   });
 
   $BoundsModelCopyWith<$Res>? get bounds;
@@ -276,9 +451,9 @@ class _$RouteInfoModelCopyWithImpl<$Res, $Val extends RouteInfoModel>
   @override
   $Res call({
     Object? polyline = freezed,
-    Object? bounds = freezed,
     Object? distance = freezed,
     Object? duration = freezed,
+    Object? bounds = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -286,10 +461,6 @@ class _$RouteInfoModelCopyWithImpl<$Res, $Val extends RouteInfoModel>
                 ? _value.polyline
                 : polyline // ignore: cast_nullable_to_non_nullable
                       as String?,
-            bounds: freezed == bounds
-                ? _value.bounds
-                : bounds // ignore: cast_nullable_to_non_nullable
-                      as BoundsModel?,
             distance: freezed == distance
                 ? _value.distance
                 : distance // ignore: cast_nullable_to_non_nullable
@@ -298,6 +469,10 @@ class _$RouteInfoModelCopyWithImpl<$Res, $Val extends RouteInfoModel>
                 ? _value.duration
                 : duration // ignore: cast_nullable_to_non_nullable
                       as int?,
+            bounds: freezed == bounds
+                ? _value.bounds
+                : bounds // ignore: cast_nullable_to_non_nullable
+                      as BoundsModel?,
           )
           as $Val,
     );
@@ -329,9 +504,9 @@ abstract class _$$RouteInfoModelImplCopyWith<$Res>
   @useResult
   $Res call({
     String? polyline,
+    @JsonKey(name: 'distance_meters') int? distance,
+    @JsonKey(name: 'duration_seconds') int? duration,
     BoundsModel? bounds,
-    int? distance,
-    int? duration,
   });
 
   @override
@@ -353,9 +528,9 @@ class __$$RouteInfoModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? polyline = freezed,
-    Object? bounds = freezed,
     Object? distance = freezed,
     Object? duration = freezed,
+    Object? bounds = freezed,
   }) {
     return _then(
       _$RouteInfoModelImpl(
@@ -363,10 +538,6 @@ class __$$RouteInfoModelImplCopyWithImpl<$Res>
             ? _value.polyline
             : polyline // ignore: cast_nullable_to_non_nullable
                   as String?,
-        bounds: freezed == bounds
-            ? _value.bounds
-            : bounds // ignore: cast_nullable_to_non_nullable
-                  as BoundsModel?,
         distance: freezed == distance
             ? _value.distance
             : distance // ignore: cast_nullable_to_non_nullable
@@ -375,6 +546,10 @@ class __$$RouteInfoModelImplCopyWithImpl<$Res>
             ? _value.duration
             : duration // ignore: cast_nullable_to_non_nullable
                   as int?,
+        bounds: freezed == bounds
+            ? _value.bounds
+            : bounds // ignore: cast_nullable_to_non_nullable
+                  as BoundsModel?,
       ),
     );
   }
@@ -385,9 +560,9 @@ class __$$RouteInfoModelImplCopyWithImpl<$Res>
 class _$RouteInfoModelImpl extends _RouteInfoModel {
   const _$RouteInfoModelImpl({
     this.polyline,
+    @JsonKey(name: 'distance_meters') this.distance,
+    @JsonKey(name: 'duration_seconds') this.duration,
     this.bounds,
-    this.distance,
-    this.duration,
   }) : super._();
 
   factory _$RouteInfoModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -396,15 +571,17 @@ class _$RouteInfoModelImpl extends _RouteInfoModel {
   @override
   final String? polyline;
   @override
-  final BoundsModel? bounds;
-  @override
+  @JsonKey(name: 'distance_meters')
   final int? distance;
   @override
+  @JsonKey(name: 'duration_seconds')
   final int? duration;
+  @override
+  final BoundsModel? bounds;
 
   @override
   String toString() {
-    return 'RouteInfoModel(polyline: $polyline, bounds: $bounds, distance: $distance, duration: $duration)';
+    return 'RouteInfoModel(polyline: $polyline, distance: $distance, duration: $duration, bounds: $bounds)';
   }
 
   @override
@@ -414,17 +591,17 @@ class _$RouteInfoModelImpl extends _RouteInfoModel {
             other is _$RouteInfoModelImpl &&
             (identical(other.polyline, polyline) ||
                 other.polyline == polyline) &&
-            (identical(other.bounds, bounds) || other.bounds == bounds) &&
             (identical(other.distance, distance) ||
                 other.distance == distance) &&
             (identical(other.duration, duration) ||
-                other.duration == duration));
+                other.duration == duration) &&
+            (identical(other.bounds, bounds) || other.bounds == bounds));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, polyline, bounds, distance, duration);
+      Object.hash(runtimeType, polyline, distance, duration, bounds);
 
   /// Create a copy of RouteInfoModel
   /// with the given fields replaced by the non-null parameter values.
@@ -446,9 +623,9 @@ class _$RouteInfoModelImpl extends _RouteInfoModel {
 abstract class _RouteInfoModel extends RouteInfoModel {
   const factory _RouteInfoModel({
     final String? polyline,
+    @JsonKey(name: 'distance_meters') final int? distance,
+    @JsonKey(name: 'duration_seconds') final int? duration,
     final BoundsModel? bounds,
-    final int? distance,
-    final int? duration,
   }) = _$RouteInfoModelImpl;
   const _RouteInfoModel._() : super._();
 
@@ -458,11 +635,13 @@ abstract class _RouteInfoModel extends RouteInfoModel {
   @override
   String? get polyline;
   @override
-  BoundsModel? get bounds;
-  @override
+  @JsonKey(name: 'distance_meters')
   int? get distance;
   @override
+  @JsonKey(name: 'duration_seconds')
   int? get duration;
+  @override
+  BoundsModel? get bounds;
 
   /// Create a copy of RouteInfoModel
   /// with the given fields replaced by the non-null parameter values.

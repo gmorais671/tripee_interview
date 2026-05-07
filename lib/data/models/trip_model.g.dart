@@ -24,6 +24,9 @@ _$TripModelImpl _$$TripModelImplFromJson(
   route: json['route'] == null
       ? null
       : RouteInfoModel.fromJson(json['route'] as Map<String, dynamic>),
+  routeInfo: json['route_info'] == null
+      ? null
+      : RouteInfoModel.fromJson(json['route_info'] as Map<String, dynamic>),
   estimateRoute: json['estimate_route'] == null
       ? null
       : RouteInfoModel.fromJson(json['estimate_route'] as Map<String, dynamic>),
@@ -44,6 +47,7 @@ Map<String, dynamic> _$$TripModelImplToJson(_$TripModelImpl instance) =>
       'start': instance.start,
       'end': instance.end,
       'route': instance.route,
+      'route_info': instance.routeInfo,
       'estimate_route': instance.estimateRoute,
       'driver': instance.driver,
       'provider': instance.provider,
