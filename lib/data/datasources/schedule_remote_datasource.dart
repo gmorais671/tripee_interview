@@ -1,9 +1,16 @@
+// lib/data/datasources/schedule_remote_datasource.dart
 import 'package:dio/dio.dart';
+import '../../core/utils/pagination.dart';
 import '../models/schedule_model.dart';
 import '../models/trip_model.dart';
 
 abstract class ScheduleRemoteDataSource {
-  Future<List<ScheduleModel>> getSchedules({int page = 1, int limit = 15});
+  Future<PaginatedResult<ScheduleModel>> getSchedules({
+    int page = 1,
+    int limit = 15,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  });
   Future<TripModel> getScheduleDetail(String id);
 }
 
@@ -12,11 +19,44 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
   ScheduleRemoteDataSourceImpl(this.dio);
 
   @override
-  Future<List<ScheduleModel>> getSchedules({int page = 1, int limit = 15}) async {
-    final resp = await dio.get('/schedules', queryParameters: {'page': page, 'limit': limit});
+  Future<PaginatedResult<ScheduleModel>> getSchedules({
+    int page = 1,
+    int limit = 15,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    final query = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
+
+    // envia sempre no formato ISO-8601 UTC (se definido)
+    if (dateFrom != null) query['date_from'] = dateFrom.toUtc().toIso8601String();
+    if (dateTo != null) query['date_to'] = dateTo.toUtc().toIso8601String();
+
+    final resp = await dio.get('/schedules', queryParameters: query);
     final data = resp.data as Map<String, dynamic>;
-    final list = (data['data'] as List).cast<Map<String, dynamic>>();
-    return list.map((json) => ScheduleModel.fromJson(json)).toList();
+    final list = (data['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+    final items = list.map((json) => ScheduleModel.fromJson(json)).toList();
+
+    final total = data['total'] is int
+        ? data['total'] as int
+        : (data['total'] != null ? int.tryParse(data['total'].toString()) ?? (page - 1) * limit + items.length : (page - 1) * limit + items.length);
+
+    final totalPages = data['total_pages'] is int
+        ? data['total_pages'] as int
+        : ((total + limit - 1) ~/ limit);
+
+    final respPage = data['page'] is int ? data['page'] as int : page;
+    final respLimit = data['limit'] is int ? data['limit'] as int : limit;
+
+    return PaginatedResult<ScheduleModel>(
+      items: items,
+      page: respPage,
+      limit: respLimit,
+      total: total,
+      totalPages: totalPages,
+    );
   }
 
   @override

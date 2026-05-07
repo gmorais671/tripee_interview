@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tripee_interview/core/utils/pagination.dart';
+import 'package:tripee_interview/presentation/providers/schedules_notifier.dart';
 import '../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
 import '../../data/datasources/schedule_remote_datasource.dart';
@@ -23,7 +25,7 @@ final getSchedulesProvider = Provider((ref) => GetSchedules(ref.read(scheduleRep
 final getScheduleDetailProvider =
     Provider((ref) => GetScheduleDetail(ref.read(scheduleRepositoryProvider)));
 
-final schedulesPageProvider = FutureProvider.family.autoDispose<List<Schedule>, int>((ref, page) {
+final schedulesPageProvider = FutureProvider.family.autoDispose<PaginatedResult<Schedule>, int>((ref, page) {
   final getSchedules = ref.read(getSchedulesProvider);
   
   return getSchedules.call(page: page, limit: 15);
@@ -32,4 +34,9 @@ final schedulesPageProvider = FutureProvider.family.autoDispose<List<Schedule>, 
 final scheduleDetailProvider = FutureProvider.family.autoDispose<Trip, String>((ref, id) {
   final getDetail = ref.read(getScheduleDetailProvider);
   return getDetail.call(id);
+});
+
+final schedulesNotifierProvider = StateNotifierProvider<SchedulesNotifier, SchedulesState>((ref) {
+  final getSchedules = ref.read(getSchedulesProvider); 
+  return SchedulesNotifier(getSchedules);
 });

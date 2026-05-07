@@ -1,107 +1,88 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../../domain/entities/schedule.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/schedule_card.dart';
+import '../providers/global_providers.dart';
 
-class SchedulesPage extends StatelessWidget {
+class SchedulesPage extends ConsumerStatefulWidget {
   const SchedulesPage({Key? key}) : super(key: key);
+  @override
+  ConsumerState<SchedulesPage> createState() => _SchedulesPageState();
+}
 
-  // Exemplo estático (substituir depois pelo provider)
-  List<Schedule> _sampleSchedules() {
-    return [
-      Schedule(
-        id: '1',
-        scheduleAt: DateTime.parse('2026-05-01T08:00:00.000Z'),
-        startAddress: 'Av. Paulista, 1000 — Bela Vista',
-        endAddress: 'Rua Oscar Freire, 300 — Jardins',
-        status: 'confirmed',
-      ),
-      Schedule(
-        id: '2',
-        scheduleAt: DateTime.parse('2026-05-01T09:30:00.000Z'),
-        startAddress: 'Rua Augusta, 450 — Consolação',
-        endAddress: 'Praça da Sé, s/n — Sé',
-        status: 'completed',
-      ),
-      Schedule(
-        id: '3',
-        scheduleAt: DateTime.parse('2026-05-02T07:15:00.000Z'),
-        startAddress: 'Rua da Consolação, 2000 — Consolação',
-        endAddress: 'Av. Brigadeiro, 1200 — Jardim Paulista',
-        status: 'pending',
-      ),
-    ];
+class _SchedulesPageState extends ConsumerState<SchedulesPage> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // load initial
+    Future.microtask(() => ref.read(schedulesNotifierProvider.notifier).loadInitial());
+    _scrollController.addListener(_onScroll);
   }
 
-  String _headerSubtitle() {
-    final now = DateTime.now();
-    return DateFormat.yMMMMd().format(now);
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    const threshold = 200.0;
+    final max = _scrollController.position.maxScrollExtent;
+    final pos = _scrollController.position.pixels;
+    if (max - pos <= threshold) {
+      ref.read(schedulesNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final schedules = _sampleSchedules();
+    final state = ref.watch(schedulesNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
         title: const Text('Histórico'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Top controls: period dropdown + search (static for now)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {}, // **static** for now
-                  icon: const Icon(Icons.date_range_outlined),
-                  label: const Text('Período'),
-                  style: ElevatedButton.styleFrom(elevation: 0, backgroundColor: Colors.grey[200], foregroundColor: Colors.black87),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search),
-                      hintText: 'Buscar',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Subtitle (ex: Hoje · 25 Nov, 2024)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                Text('Hoje · ${_headerSubtitle()}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[800])),
-              ],
-            ),
-          ),
-
-          // List
-          Expanded(
-            child: ListView.builder(
-              itemCount: schedules.length,
-              itemBuilder: (context, index) {
-                final s = schedules[index];
-                return ScheduleCard(schedule: s);
-              },
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_alt_outlined),
+            onPressed: () async {
+              // open DateRangePicker and call notifier.applyDateRange(...)
+            },
           ),
         ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(schedulesNotifierProvider.notifier).refresh(),
+        child: Builder(builder: (_) {
+          if (state.isLoading && state.items.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.error != null && state.items.isEmpty) {
+            return Center(child: Text('Erro: ${state.error}'));
+          }
+
+          if (state.items.isEmpty) {
+            return const Center(child: Text('Nenhum agendamento encontrado'));
+          }
+
+          return ListView.builder(
+            controller: _scrollController,
+            itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index < state.items.length) {
+                final s = state.items[index];
+                return ScheduleCard(schedule: s);
+              } else {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+            },
+          );
+        }),
       ),
     );
   }

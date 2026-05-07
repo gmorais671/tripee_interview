@@ -1,7 +1,15 @@
+import 'package:tripee_interview/core/utils/pagination.dart';
+
 import '../entities/schedule.dart';
 import '../entities/trip.dart';
 
 abstract class ScheduleRepository {
-  Future<List<Schedule>> getSchedules({int page = 1, int limit = 15});
+  Future<PaginatedResult<Schedule>> getSchedules({
+    int page = 1,
+    int limit = 15,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  });
+
   Future<Trip> getScheduleDetail(String id);
 }

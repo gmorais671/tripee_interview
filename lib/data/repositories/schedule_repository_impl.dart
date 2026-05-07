@@ -1,3 +1,5 @@
+import 'package:tripee_interview/core/utils/pagination.dart';
+
 import '../../domain/entities/schedule.dart';
 import '../../domain/entities/trip.dart';
 import '../../domain/repositories/schedule_repository.dart';
@@ -9,9 +11,21 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   ScheduleRepositoryImpl(this.remote);
 
   @override
-  Future<List<Schedule>> getSchedules({int page = 1, int limit = 15}) async {
-    final models = await remote.getSchedules(page: page, limit: limit);
-    return models.map((m) => m.toEntity()).toList();
+  Future<PaginatedResult<Schedule>> getSchedules({
+    int page = 1,
+    int limit = 15,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    final result = await remote.getSchedules(page: page, limit: limit, dateFrom: dateFrom, dateTo: dateTo);
+    final domainItems = result.items.map((m) => m.toEntity()).toList();
+    return PaginatedResult<Schedule>(
+      items: domainItems,
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    );
   }
 
   @override
