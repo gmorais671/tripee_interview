@@ -107,4 +107,9 @@ Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable
 
 ---
 
+### 📱 Download do APK
+Você pode baixar a versão pronta para instalação na seção de **[Releases](https://github.com/gmorais671/tripee_interview/releases)**.
+
+---
+
 ### Developed by Gabriel Morais Marcondes
