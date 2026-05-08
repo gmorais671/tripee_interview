@@ -75,16 +75,18 @@ Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable
     ```bash
     dart run build_runner build
     
-    * Certifique-se de ter as seguintes dependências no pubspec.yaml:
+    Certifique-se de ter as seguintes dependências no pubspec.yaml:
 
-    dependencies:
-        freezed_annotation: ^2.x.x
-        json_annotation: ^4.x.x
+        ```bash
+        dependencies:
+            freezed_annotation: ^2.x.x
+            json_annotation: ^4.x.x
 
-    dev_dependencies:
-        build_runner: ^2.x.x
-        freezed: ^2.x.x
-        json_serializable: ^6.x.x
+        dev_dependencies:
+            build_runner: ^2.x.x
+            freezed: ^2.x.x
+            json_serializable: ^6.x.x
+
 
 * **Alternativa: Usar OpenAPI Generator (para regenerar a partir do Swagger)** 
     Esta abordagem é útil para manter os modelos totalmente sincronizados com o contrato da API, mas foi mantida como alternativa para evitar conflitos de versão e facilitar customizações locais.
