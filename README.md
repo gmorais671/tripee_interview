@@ -19,7 +19,7 @@ Projeto desenvolvido para o teste técnico da Tripee. O objetivo é uma aplicaç
    ````flutter run`
 
 4. **Executar Testes:**
-
+   ```bash
    ````flutter test`
 
 ---
@@ -69,7 +69,8 @@ Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable
     As classes de modelo estão localizadas em lib/data/models/ e são anotadas com @freezed e @JsonSerializable.
 
     Para regerar os arquivos .g.dart e .freezed.dart, execute:
-    ````dart run build_runner build`
+    ```bash
+    dart run build_runner build
     
     Certifique-se de ter as seguintes dependências no pubspec.yaml:
 
@@ -84,7 +85,7 @@ Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable
 
 * **Alternativa: Usar OpenAPI Generator (para regenerar a partir do Swagger)** 
     Esta abordagem é útil para manter os modelos totalmente sincronizados com o contrato da API, mas foi mantida como alternativa para evitar conflitos de versão e facilitar customizações locais.
-    
+
 ---
 
 ### 📝 Notas sobre a API
