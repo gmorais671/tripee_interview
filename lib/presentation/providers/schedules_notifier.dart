@@ -1,15 +1,16 @@
+// providers/schedules_notifier.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tripee_interview/domain/entities/schedule.dart';
 import 'package:tripee_interview/domain/usecases/get_schedules.dart';
-import '../../core/utils/pagination.dart';
+import 'dart:math' as math;
 
 class SchedulesState {
   final List<Schedule> items;
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
-  final int page;
-  final bool hasMore;
+  final int page; // current page loaded (starts at lastPage)
+  final bool hasMore; // means: has older pages to load (page > 1)
   final int totalPages;
   final DateTime? dateFrom;
   final DateTime? dateTo;
@@ -26,27 +27,31 @@ class SchedulesState {
     this.dateTo,
   });
 
+  static const _noValue = Object();
+
   SchedulesState copyWith({
     List<Schedule>? items,
     bool? isLoading,
     bool? isLoadingMore,
-    String? error,
+    Object? error = _noValue, // allow explicit null
     int? page,
     bool? hasMore,
     int? totalPages,
-    DateTime? dateFrom,
-    DateTime? dateTo,
+    Object? dateFrom = _noValue, // sentinel: allows setting null
+    Object? dateTo = _noValue,   // sentinel: allows setting null
   }) {
     return SchedulesState(
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      error: error,
+      // if error was not provided, keep existing; if provided (even null) use it
+      error: error == _noValue ? this.error : error as String?,
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
       totalPages: totalPages ?? this.totalPages,
-      dateFrom: dateFrom ?? this.dateFrom,
-      dateTo: dateTo ?? this.dateTo,
+      // for dateFrom/dateTo: if the sentinel was passed, keep existing; otherwise use provided (which may be null)
+      dateFrom: dateFrom == _noValue ? this.dateFrom : dateFrom as DateTime?,
+      dateTo: dateTo == _noValue ? this.dateTo : dateTo as DateTime?,
     );
   }
 }
@@ -54,6 +59,7 @@ class SchedulesState {
 class SchedulesNotifier extends StateNotifier<SchedulesState> {
   final GetSchedules _getSchedules;
   final int _limit;
+  bool _loadingInProgress = false;
 
   SchedulesNotifier(this._getSchedules, {int limit = 15})
       : _limit = limit,
@@ -65,52 +71,121 @@ class SchedulesNotifier extends StateNotifier<SchedulesState> {
     return true;
   }
 
-  // Converte e filtra a lista retornada pelo servidor usando dateFrom/dateTo
   List<Schedule> _filterItemsByDate(List<Schedule> items, DateTime? from, DateTime? to) {
     if (from == null && to == null) return items;
     return items.where((s) {
-      final at = s.scheduleAt; // supondo que Schedule.scheduleAt é DateTime
-      return _withinRange(at, from, to);
+      final at = s.scheduleAt;
+      return at != null && _withinRange(at, from, to);
     }).toList();
   }
 
+  // helpers
+  DateTime _startOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 0, 0, 0);
+  DateTime _endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
+
+  // Public: mantém compatibilidade
   Future<void> loadInitial() async {
-    if (state.isLoading) return;
-    state = state.copyWith(isLoading: true, error: null, page: 1);
+    await _loadInitialWithDates(state.dateFrom, state.dateTo);
+  }
+
+  // Implementação que usa explicitamente os valores passados
+  Future<void> _loadInitialWithDates(DateTime? dateFrom, DateTime? dateTo) async {
+    if (_loadingInProgress) {
+      print('[Notifier] _loadInitialWithDates: already running, returning');
+      return;
+    }
+    _loadingInProgress = true;
+
     try {
-      final result = await _getSchedules.call(
+      print('[Notifier] _loadInitialWithDates called with dateFrom=$dateFrom dateTo=$dateTo');
+
+      // marca como loading no state
+      state = state.copyWith(isLoading: true, error: null);
+
+      // 1) consulta a página 1 para obter totalPages
+      print('[Notifier] requesting page=1 with dateFrom=$dateFrom dateTo=$dateTo');
+      final firstPageResult = await _getSchedules.call(
         page: 1,
         limit: _limit,
-        dateFrom: state.dateFrom,
-        dateTo: state.dateTo,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
       );
 
-      // Filtragem cliente — caso o backend não aplique o filtro
-      final filtered = _filterItemsByDate(result.items, state.dateFrom, state.dateTo);
+      final int totalPages = math.max(1, firstPageResult.totalPages ?? 1);
+      print('[Notifier] firstPage.totalPages = $totalPages');
 
-      final hasMore = result.page < result.totalPages; // ainda tentamos varrer até totalPages
+      // 2) agora busca a última página (mais recentes)
+      var lastPage = totalPages;
+      print('[Notifier] requesting lastPage=$lastPage with dateFrom=$dateFrom dateTo=$dateTo');
+
+      final lastPageResult = await _getSchedules.call(
+        page: lastPage,
+        limit: _limit,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
+
+      // aplica filtro local (fallback)
+      List<Schedule> accumulated = _filterItemsByDate(lastPageResult.items, dateFrom, dateTo);
+
+      // lowestLoadedPage será atualizado conforme vamos pré-carregar páginas anteriores
+      var lowestLoadedPage = lastPage;
+
+      // Se a última página tiver menos que _limit itens e existir página anterior,
+      // pré-carregamos páginas anteriores até termos pelo menos _limit ou alcançarmos page 1.
+      while (accumulated.length < _limit && lowestLoadedPage > 1) {
+        final nextPage = lowestLoadedPage - 1;
+        print('[Notifier] prefetching page=$nextPage (to fill initial screen)');
+        final pageResult = await _getSchedules.call(
+          page: nextPage,
+          limit: _limit,
+          dateFrom: dateFrom,
+          dateTo: dateTo,
+        );
+
+        final filtered = _filterItemsByDate(pageResult.items, dateFrom, dateTo);
+
+        // adiciona itens mais antigos ao final (mantendo ordem decrescente por data)
+        accumulated = [...accumulated, ...filtered];
+
+        lowestLoadedPage = nextPage;
+
+        // se alcançamos page 1, paramos
+        if (lowestLoadedPage <= 1) break;
+      }
+
+      final hasMore = lowestLoadedPage > 1;
+
       state = state.copyWith(
-        items: filtered,
+        items: accumulated,
         isLoading: false,
-        page: result.page,
+        isLoadingMore: false,
+        page: lowestLoadedPage,
         hasMore: hasMore,
-        totalPages: result.totalPages,
+        totalPages: totalPages,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
       );
+
+      print('[Notifier] loaded initial pages from $lowestLoadedPage..$lastPage items=${state.items.length} hasMore=$hasMore');
     } catch (e, st) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      print('loadInitial error: $e\n$st');
+      print('[Notifier] _loadInitialWithDates ERROR: $e\n$st');
+      state = state.copyWith(isLoading: false, isLoadingMore: false, error: e.toString());
+      rethrow;
+    } finally {
+      _loadingInProgress = false;
     }
   }
 
   Future<void> refresh() async {
-    await loadInitial();
+    await _loadInitialWithDates(state.dateFrom, state.dateTo);
   }
 
   Future<void> loadMore() async {
     if (state.isLoadingMore || !state.hasMore) return;
 
-    final nextPage = state.page + 1;
-    if (nextPage > state.totalPages) {
+    final prevPage = state.page - 1;
+    if (prevPage < 1) {
       state = state.copyWith(hasMore: false);
       return;
     }
@@ -118,21 +193,20 @@ class SchedulesNotifier extends StateNotifier<SchedulesState> {
     state = state.copyWith(isLoadingMore: true, error: null);
     try {
       final result = await _getSchedules.call(
-        page: nextPage,
+        page: prevPage,
         limit: _limit,
         dateFrom: state.dateFrom,
         dateTo: state.dateTo,
       );
 
-      // filtrar somente os itens do intervalo
       final filtered = _filterItemsByDate(result.items, state.dateFrom, state.dateTo);
-
       final newItems = [...state.items, ...filtered];
-      final hasMore = result.page < result.totalPages;
+      final hasMore = prevPage > 1;
+
       state = state.copyWith(
         items: newItems,
         isLoadingMore: false,
-        page: result.page,
+        page: prevPage,
         hasMore: hasMore,
         totalPages: result.totalPages,
       );
@@ -142,9 +216,36 @@ class SchedulesNotifier extends StateNotifier<SchedulesState> {
     }
   }
 
+  // applyDateRange atualiza o state imediatamente e carrega usando os valores normalizados
   Future<void> applyDateRange(DateTime? from, DateTime? to) async {
-    // resetar estado e paginação
-    state = state.copyWith(dateFrom: from, dateTo: to, page: 1, items: [], totalPages: 1, hasMore: true);
-    await loadInitial();
+    try {
+      print('[Notifier] applyDateRange called with raw from=$from to=$to');
+
+      final DateTime? normalizedFrom = from != null ? _startOfDay(from) : null;
+      final DateTime? normalizedTo = to != null ? _endOfDay(to) : null;
+      print('[Notifier] applyDateRange normalized: dateFrom=$normalizedFrom dateTo=$normalizedTo');
+
+      // Atualiza o state IMEDIATAMENTE com os valores normalizados
+      state = state.copyWith(
+        dateFrom: normalizedFrom,
+        dateTo: normalizedTo,
+        page: 1,
+        items: [],
+        isLoading: true,
+        isLoadingMore: false,
+        error: null,
+        // ajuste outros campos conforme seu state class
+      );
+
+      print('[Notifier] state updated (after applyDateRange): dateFrom=${state.dateFrom} dateTo=${state.dateTo}');
+
+      // Chama a rotina de carregamento passando explicitamente os normalizedFrom/To
+      await _loadInitialWithDates(normalizedFrom, normalizedTo);
+    } catch (e, st) {
+      // tratar erro atualizando o estado apropriadamente
+      print('[Notifier] applyDateRange ERROR: $e\n$st');
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
   }
 }
