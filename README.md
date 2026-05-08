@@ -5,22 +5,23 @@ Projeto desenvolvido para o teste técnico da Tripee. O objetivo é uma aplicaç
 ### 🚀 Como rodar o projeto
 
 1. **Instalar dependências:**
-
-   ````flutter pub get`
+    ```bash
+    flutter pub get
 
 2. **Configurar Variáveis de Ambiente:**
 
     O projeto utiliza flutter_dotenv. Crie um arquivo .env na raiz do projeto (não comitado) com o seguinte conteúdo:
 
-   ````API_BASE_URL=https://tripee-interview.azurewebsites.net/v1`
+    ```bash
+    API_BASE_URL=https://tripee-interview.azurewebsites.net/v1
 
 3. **Executar o App:**
-
-   ````flutter run`
+    ```bash
+    flutter run
 
 4. **Executar Testes:**
-   ```bash
-   ````flutter test`
+    ```bash
+    flutter test
 
 ---
 
@@ -66,14 +67,15 @@ Projeto desenvolvido para o teste técnico da Tripee. O objetivo é uma aplicaç
 Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable, aproveitando as vantagens de imutabilidade, tipos seguros e geração automática de fromJson/toJson.
 
 * **Geração local com Freezed + JsonSerializable (padrão do projeto)** 
+
     As classes de modelo estão localizadas em lib/data/models/ e são anotadas com @freezed e @JsonSerializable.
 
     Para regerar os arquivos .g.dart e .freezed.dart, execute:
 
     ```bash
-    dart run build_runner build```
+    dart run build_runner build
     
-    Certifique-se de ter as seguintes dependências no pubspec.yaml:
+    * Certifique-se de ter as seguintes dependências no pubspec.yaml:
 
     dependencies:
         freezed_annotation: ^2.x.x
