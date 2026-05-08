@@ -9,6 +9,7 @@ abstract class ScheduleRepository {
     int limit = 15,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String? query,
   });
 
   Future<Trip> getScheduleDetail(String id);

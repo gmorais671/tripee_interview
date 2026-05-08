@@ -12,12 +12,14 @@ class GetSchedules {
     int limit = 15,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String? query,
   }) {
     return repository.getSchedules(
       page: page,
       limit: limit,
       dateFrom: dateFrom,
       dateTo: dateTo,
+      query: query,
     );
   }
 }

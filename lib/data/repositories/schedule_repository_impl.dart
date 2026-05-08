@@ -16,8 +16,16 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     int limit = 15,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String? query,
   }) async {
-    final result = await remote.getSchedules(page: page, limit: limit, dateFrom: dateFrom, dateTo: dateTo);
+    final result = await remote.getSchedules(
+      page: page,
+      limit: limit,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+      query: query, // passou query aqui
+    );
+
     final domainItems = result.items.map((m) => m.toEntity()).toList();
     return PaginatedResult<Schedule>(
       items: domainItems,

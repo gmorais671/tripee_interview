@@ -1,4 +1,3 @@
-// lib/data/datasources/schedule_remote_datasource.dart
 import 'package:dio/dio.dart';
 import '../../core/utils/pagination.dart';
 import '../models/schedule_model.dart';
@@ -10,6 +9,7 @@ abstract class ScheduleRemoteDataSource {
     int limit = 15,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String? query, // novo
   });
   Future<TripModel> getScheduleDetail(String id);
 }
@@ -24,17 +24,22 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
     int limit = 15,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String? query,
   }) async {
-    final query = <String, dynamic>{
+    final params = <String, dynamic>{
       'page': page,
       'limit': limit,
     };
 
     // envia sempre no formato ISO-8601 UTC (se definido)
-    if (dateFrom != null) query['date_from'] = dateFrom.toUtc().toIso8601String();
-    if (dateTo != null) query['date_to'] = dateTo.toUtc().toIso8601String();
+    if (dateFrom != null) params['date_from'] = dateFrom.toUtc().toIso8601String();
+    if (dateTo != null) params['date_to'] = dateTo.toUtc().toIso8601String();
 
-    final resp = await dio.get('/schedules', queryParameters: query);
+    if (query != null && query.isNotEmpty) {
+      params['query'] = query;
+    }
+
+    final resp = await dio.get('/schedules', queryParameters: params);
     final data = resp.data as Map<String, dynamic>;
     final list = (data['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
     final items = list.map((json) => ScheduleModel.fromJson(json)).toList();

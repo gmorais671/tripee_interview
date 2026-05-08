@@ -14,6 +14,7 @@ class SchedulesPage extends ConsumerStatefulWidget {
 
 class _SchedulesPageState extends ConsumerState<SchedulesPage> {
   final _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -98,6 +100,7 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(schedulesNotifierProvider);
+    final notifier = ref.read(schedulesNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -106,38 +109,108 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(schedulesNotifierProvider.notifier).refresh(),
-        child: Builder(builder: (_) {
-          if (state.isLoading && state.items.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date range filter button (sempre visível)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+              child: DateRangeFilterButton(
+                onApply: (start, end) async {
+                  await notifier.applyDateRange(start, end);
+                  if (_scrollController.hasClients) _scrollController.jumpTo(0);
+                },
+              ),
+            ),
 
-          if (state.error != null && state.items.isEmpty) {
-            return Center(child: Text('Erro: ${state.error}'));
-          }
-
-          if (state.items.isEmpty) {
-            return const Center(child: Text('Nenhum agendamento encontrado'));
-          }
-
-          final flattened = _flattenWithHeaders(state.items);
-          // número total = flattened + footer possível
-          final itemCount = flattened.length + (state.isLoadingMore ? 1 : 0);
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            //mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: DateRangeFilterButton(
-                  onApply: (start, end) async {
-                    await ref.read(schedulesNotifierProvider.notifier).applyDateRange(start, end);
-                    if (_scrollController.hasClients) _scrollController.jumpTo(0);
-                  },
+            // Search field (sempre visível)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: TextField(
+                controller: _searchController,
+                textInputAction: TextInputAction.search,
+                onChanged: (value) {
+                  notifier.applySearch(value);
+                },
+                onSubmitted: (value) async {
+                  await notifier.searchNow(value);
+                  if (_scrollController.hasClients) _scrollController.jumpTo(0);
+                },
+                decoration: InputDecoration(
+                  hintText: 'Buscar (endereço, status, id...)',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: state.searchQuery != null && state.searchQuery!.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () async {
+                            _searchController.clear();
+                            await notifier.searchNow(null);
+                            if (_scrollController.hasClients) _scrollController.jumpTo(0);
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade50,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.withOpacity(0.35), width: 1.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.2),
+                  ),
                 ),
               ),
-              Expanded(
-                child: ListView.builder(
+            ),
+
+            // Área principal: loader / erro / empty / lista
+            Expanded(
+              child: Builder(builder: (_) {
+                // Loading initial + no items -> show loader (but keep filters visible)
+                if (state.isLoading && state.items.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Error + no items -> show error message + allow refresh/clear
+                if (state.error != null && state.items.isEmpty) {
+                  return Center(child: Text('Erro: ${state.error}'));
+                }
+
+                // No items -> show empty state + quick action to clear filters (if any)
+                if (state.items.isEmpty) {
+                  final hasActiveFilters = (state.searchQuery != null && state.searchQuery!.isNotEmpty) ||
+                      state.dateFrom != null ||
+                      state.dateTo != null;
+
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Nenhum agendamento encontrado'),
+                        const SizedBox(height: 12),
+                        if (hasActiveFilters)
+                          ElevatedButton(
+                            onPressed: () async {
+                              // limpa tanto a busca quanto o date range
+                              _searchController.clear();
+                              await notifier.searchNow(null);
+                              await notifier.applyDateRange(null, null);
+                              if (_scrollController.hasClients) _scrollController.jumpTo(0);
+                            },
+                            child: const Text('Limpar filtros'),
+                          ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Há items -> renderiza lista agrupada
+                final flattened = _flattenWithHeaders(state.items);
+                final itemCount = flattened.length + (state.isLoadingMore ? 1 : 0);
+
+                return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 12),
                   itemCount: itemCount,
@@ -145,7 +218,6 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
                     if (index < flattened.length) {
                       final obj = flattened[index];
                       if (obj is String) {
-                        // header
                         return Padding(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: Text(
@@ -159,18 +231,17 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
                         return const SizedBox.shrink();
                       }
                     } else {
-                      // footer loader
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Center(child: CircularProgressIndicator()),
                       );
                     }
                   },
-                ),
-              ),
-            ],
-          );
-        }),
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
