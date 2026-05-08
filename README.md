@@ -69,8 +69,9 @@ Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable
     As classes de modelo estão localizadas em lib/data/models/ e são anotadas com @freezed e @JsonSerializable.
 
     Para regerar os arquivos .g.dart e .freezed.dart, execute:
+
     ```bash
-    dart run build_runner build
+    dart run build_runner build```
     
     Certifique-se de ter as seguintes dependências no pubspec.yaml:
 
