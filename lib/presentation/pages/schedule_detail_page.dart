@@ -1,8 +1,11 @@
 // lib/presentation/pages/schedule_detail_page.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:tripee_interview/domain/entities/trip.dart';
+import 'package:tripee_interview/presentation/widgets/driver_avatar.dart';
+import 'package:tripee_interview/presentation/widgets/router_points.dart';
 import 'package:tripee_interview/presentation/widgets/trip_map_widget.dart';
 import '../providers/global_providers.dart';
 
@@ -40,6 +43,7 @@ class ScheduleDetailPage extends ConsumerWidget {
       appBar: _buildAppBar(),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             
             // Mapa: usa TripMapWidget se tivermos coordenadas; senão mostra o placeholder cinza
@@ -50,6 +54,7 @@ class ScheduleDetailPage extends ConsumerWidget {
                 origin: LatLng(trip.start!.coordinates!.lat!, trip.start!.coordinates!.lng!),
                 destination: LatLng(trip.end!.coordinates!.lat!, trip.end!.coordinates!.lng!),
                 height: 260,
+                zoomOffset: 0.7,
               ),
             ] else ...[
               AspectRatio(
@@ -65,37 +70,41 @@ class ScheduleDetailPage extends ConsumerWidget {
 
             // Status
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(6)),
-                child: Text(status, style: const TextStyle(color: Colors.green)),
+                child: Text(status, style: const TextStyle(color: Color.fromARGB(255, 14, 90, 26))),
               ),
             ),
 
             const SizedBox(height: 12),
 
             // Origem
-            ListTile(
-              leading: const Icon(Icons.place, color: Colors.blue),
-              title: Text('Origem - ${_formatDate(trip.startDate)}', style: const TextStyle(color: Colors.blue)),
-              subtitle: Text(startAddress),
-            ),
-
-            // Destino
-            ListTile(
-              leading: const Icon(Icons.flag, color: Colors.blue),
-              title: Text('Destino - ${_formatDate(trip.endDate)}', style: const TextStyle(color: Colors.blue)),
-              subtitle: Text(endAddress),
+            RoutePoints(
+              originTitle: 'Origem - ${_formatDate(trip.startDate)}',
+              originSubtitle: startAddress,
+              destinationTitle: 'Destino - ${_formatDate(trip.endDate)}',
+              destinationSubtitle: endAddress,
+              accentColor: const Color(0xFF1976D2), // opcional, padrão usa theme
             ),
 
             const Divider(),
 
             // Driver
             ListTile(
-              leading: CircleAvatar(radius: 28, backgroundImage: driverImage),
-              title: Text(driverName),
-              subtitle: Text('$providerName | $driverCar • $driverPlate'),
+              leading: DriverAvatar(
+                driverPhotoUrl: trip.driver?.photo,
+                providerLogoUrl: trip.provider?.logo,
+                driverName: trip.driver?.name,
+                radius: 28,
+              ),
+              title: Text(trip.driver?.name ?? 'Motorista não identificado'),
+              subtitle: Text(
+                '${trip.provider?.name} | ${trip.driver?.car} • ${trip.driver?.plate}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
 
             const Divider(),
@@ -132,8 +141,15 @@ class ScheduleDetailPage extends ConsumerWidget {
   }
 
   String _monthAbbr(int m) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
     return months[m - 1];
+  }
+
+  String getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
   }
 
   Widget _buildPoliciesAndRating(Trip trip) {
@@ -166,7 +182,7 @@ class ScheduleDetailPage extends ConsumerWidget {
           const SizedBox(height: 6),
           const Text(
             justificationValue,
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: TextStyle(fontSize: 14, color: Colors.black),
           ),
 
           const SizedBox(height: 18),
@@ -191,10 +207,10 @@ class ScheduleDetailPage extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           // Comentário (em aspas, itálico)
-          Text(
+          const Text(
             comment == '—' ? 'Sem avaliação' : '“$comment”',
             style: TextStyle(
-              color: Colors.grey[700],
+              color: Colors.black,
               fontStyle: comment == '—' ? FontStyle.normal : FontStyle.italic,
               fontSize: 14,
             ),
@@ -205,6 +221,4 @@ class ScheduleDetailPage extends ConsumerWidget {
       ),
     );
   }
-
-
 }

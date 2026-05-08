@@ -1,15 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
-/// TripMapWidget
-/// - realizedPoints / estimatedPoints: lista de pontos. Aceita:
-///   - latlong2.LatLng
-///   - objetos com propriedades `latitude` e `longitude` (ex: google_maps_flutter.LatLng)
-///   - Map com chaves 'lat'/'lng' ou 'latitude'/'longitude'
-/// - origin/destination: mesmo formato acima (opcional)
+/// TripMapWidget (ajustado para evitar problema de tiles só aparecerem após toque)
 class TripMapWidget extends StatefulWidget {
   final List<dynamic> realizedPoints;
   final List<dynamic> estimatedPoints;
@@ -17,6 +12,7 @@ class TripMapWidget extends StatefulWidget {
   final dynamic destination;
   final double height;
   final double initialZoom;
+  final double zoomOffset;
 
   const TripMapWidget({
     super.key,
@@ -26,6 +22,7 @@ class TripMapWidget extends StatefulWidget {
     this.destination,
     this.height = 260,
     this.initialZoom = 13,
+    this.zoomOffset = 0.0,
   });
 
   @override
@@ -34,19 +31,21 @@ class TripMapWidget extends StatefulWidget {
 
 class _TripMapWidgetState extends State<TripMapWidget> {
   final MapController _mapController = MapController();
+  late final StreamSubscription<MapEvent> _mapSub;
+  double _currentZoom = 0.0;
+  static const double _minMapZoom = 3.0;
+  static const double _maxMapZoom = 18.0;
 
   // Normaliza diversos formatos de ponto para latlong2.LatLng
   ll.LatLng? _toLL(dynamic p) {
     if (p == null) return null;
     try {
       if (p is ll.LatLng) return p;
-      // google_maps_flutter.LatLng has latitude and longitude getters
       final dyn = p as dynamic;
       final lat = dyn.latitude ?? dyn.lat ?? (dyn['latitude'] ?? dyn['lat']);
       final lng = dyn.longitude ?? dyn.lng ?? (dyn['longitude'] ?? dyn['lng']);
       if (lat is num && lng is num) return ll.LatLng(lat.toDouble(), lng.toDouble());
     } catch (_) {
-      // fallback para Map-like
       try {
         if (p is Map) {
           final lat = p['latitude'] ?? p['lat'];
@@ -76,18 +75,60 @@ class _TripMapWidgetState extends State<TripMapWidget> {
     final e = _toLLList(widget.estimatedPoints);
     if (e.isNotEmpty) return e.first;
 
-    // fallback: centro aproximado do Brasil (ou escolha outra)
+    // fallback: centro aproximado do Brasil (ou outro fallback que prefira)
     return const ll.LatLng(-15.7801, -47.9292);
   }
 
   @override
   void initState() {
     super.initState();
-    // Ajusta bounds após o build
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fitBounds());
+
+    // inicializa com o initialZoom (até o mapEvent atualizar)
+    _currentZoom = widget.initialZoom;
+
+    // escuta eventos do mapa
+    _mapSub = _mapController.mapEventStream.listen((event) {
+      // tenta pegar zoom do event.camera (presente em MapEvent)
+      double z;
+      try {
+        z = event.camera.zoom;
+      } catch (_) {
+        // fallback: pega do controller.camera (pode lançar se controller ainda não ligado)
+        try {
+          z = _mapController.camera.zoom;
+        } catch (_) {
+          z = _currentZoom;
+        }
+      }
+
+      // atualiza apenas se houver mudança visível
+      if ((z - _currentZoom).abs() > 1e-3) {
+        setState(() {
+          _currentZoom = z;
+        });
+      }
+    });
   }
 
-  void _fitBounds() {
+  @override
+  void dispose() {
+    _mapSub.cancel();
+    super.dispose();
+  }
+
+  double _lerpSizeForZoom({
+    required double zoom,
+    required double minSize,
+    required double maxSize,
+    double minZoom = _minMapZoom,
+    double maxZoom = _maxMapZoom,
+  }) {
+    final t = ((zoom - minZoom) / (maxZoom - minZoom)).clamp(0.0, 1.0);
+    return minSize + (maxSize - minSize) * t;
+  }
+
+  // Versão assíncrona e robusta do fitBounds
+  Future<void> _fitBounds() async {
     final all = <ll.LatLng>[];
     all.addAll(_toLLList(widget.realizedPoints));
     all.addAll(_toLLList(widget.estimatedPoints));
@@ -98,6 +139,7 @@ class _TripMapWidgetState extends State<TripMapWidget> {
 
     if (all.isEmpty) return;
 
+    // bounding box
     double minLat = all.first.latitude;
     double maxLat = all.first.latitude;
     double minLng = all.first.longitude;
@@ -114,34 +156,43 @@ class _TripMapWidgetState extends State<TripMapWidget> {
     final centerLng = (minLng + maxLng) / 2;
     final center = ll.LatLng(centerLat, centerLng);
 
-    // estimate zoom to fit longitude/latitude span into widget size
     final latSpan = (maxLat - minLat).abs();
     final lngSpan = (maxLng - minLng).abs();
 
-    // get map widget size (fallback to MediaQuery)
+    // pega tamanho do widget se disponível
     final size = context.size ?? MediaQuery.of(context).size;
-    final mapWidth = size.width - 40; // deixa um padding visual
-    final mapHeight = widget.height - 40;
+    final mapWidth = math.max(100.0, size.width - 40);
+    final mapHeight = math.max(100.0, widget.height - 40);
 
     double zoomForSpan(double span, double px) {
       if (span <= 0) return widget.initialZoom;
-      // formula aproximada para zoom (tile size = 256)
       final z = math.log(px * 360 / (span * 256)) / math.ln2;
       return z;
     }
 
     final zoomLng = zoomForSpan(lngSpan, mapWidth);
     final zoomLat = zoomForSpan(latSpan, mapHeight);
-
-    // escolhe o menor zoom (mais distante) entre os dois para garantir que todo o bounds caiba
     double zoom = math.min(zoomLat, zoomLng);
 
-    // some sane bounds: 1..18 (ajuste conforme necessário)
     if (zoom.isNaN || zoom.isInfinite) zoom = widget.initialZoom;
+    
+    // aplica offset (positivo -> mais perto; negativo -> mais longe)
+    zoom = zoom - widget.zoomOffset;
+
+    // garante limites
     zoom = zoom.clamp(3.0, 18.0);
 
-    // move camera para o centro com o zoom calculado
-    _mapController.move(center, zoom);
+    // Pequeno delay para dar tempo ao TileLayer iniciar
+    await Future.delayed(const Duration(milliseconds: 160));
+
+    try {
+      _mapController.move(center, zoom);
+      // força repaint/pedido de tiles
+      if (mounted) setState(() {});
+      debugPrint('TripMapWidget: moved to center=$center zoom=$zoom (points=${all.length})');
+    } catch (e, st) {
+      debugPrint('TripMapWidget._fitBounds error: $e\n$st');
+    }
   }
 
   Widget _legend() {
@@ -178,6 +229,8 @@ class _TripMapWidgetState extends State<TripMapWidget> {
     final realized = _toLLList(widget.realizedPoints);
     final estimated = _toLLList(widget.estimatedPoints);
 
+    
+
     final polylines = <Polyline>[];
     if (realized.isNotEmpty) {
       polylines.add(Polyline(points: realized, color: const Color(0xFF1976D2), strokeWidth: 4.0));
@@ -187,31 +240,86 @@ class _TripMapWidgetState extends State<TripMapWidget> {
     }
 
     final markers = <Marker>[];
+    // parâmetros base (ajuste conforme seu gosto)
+    const double originMinContainer = 18.0;
+    const double originMaxContainer = 40.0;
+    const double destMinContainer = 28.0;
+    const double destMaxContainer = 72.0;
+
+    // proporção do ícone em relação ao container
+    const double originInnerRatio = 0.55; 
+    const double destIconRatio = 0.55; 
+
     final o = _toLL(widget.origin);
     final d = _toLL(widget.destination);
+
+    // ORIGIN marker (círculo azul)
     if (o != null) {
+      final originContainer = _lerpSizeForZoom(
+        zoom: _currentZoom,
+        minSize: originMinContainer,
+        maxSize: originMaxContainer,
+      );
+
+      final originInner = math.max(6.0, originContainer * originInnerRatio);
+      final originBorder = math.max(1.0, originInner * 0.12);
+
       markers.add(
         Marker(
           point: o,
-          width: 36,
-          height: 36,
-          child: const Icon(Icons.circle, color: Colors.blue, size: 12),
-        )
+          width: originContainer,
+          height: originContainer,
+          child: SizedBox(
+            width: originContainer,
+            height: originContainer,
+            child: Center(
+              child: Container(
+                width: originInner,
+                height: originInner,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: originBorder),
+                ),
+              ),
+            ),
+          ),
+        ),
       );
     }
+
+    // DESTINATION marker (pin vermelho)
     if (d != null) {
+      final destContainer = _lerpSizeForZoom(
+        zoom: _currentZoom,
+        minSize: destMinContainer,
+        maxSize: destMaxContainer,
+      );
+
+      final destIconSize = math.max(12.0, destContainer * destIconRatio);
+
       markers.add(
         Marker(
           point: d,
-          width: 36,
-          height: 36,
-          child: const Icon(Icons.location_on, color: Colors.red, size: 28),
-        )
+          width: destContainer,
+          height: destContainer,
+          child: SizedBox(
+            width: destContainer,
+            height: destContainer,
+            child: Center(
+              child: Icon(
+                Icons.location_on,
+                color: Colors.red,
+                size: destIconSize,
+              ),
+            ),
+          ),
+        ),
       );
     }
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
       child: SizedBox(
@@ -223,23 +331,23 @@ class _TripMapWidgetState extends State<TripMapWidget> {
               options: MapOptions(
                 initialCenter: _initialCenter(),
                 initialZoom: widget.initialZoom,
-                // configuração de interação (use const para padrão)
                 interactionOptions: const InteractionOptions(),
-                // callback quando o mapa estiver pronto (bom para ajustar bounds)
-                onMapReady: () => _fitBounds(),
+                onMapReady: () {
+                  // chama a versão assíncrona
+                  _fitBounds();
+                },
                 keepAlive: false,
               ),
               children: [
+                // Use o template único para evitar alerta com subdomains do OSM
                 TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c'],
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.tripee_interview',
                 ),
                 if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
                 if (markers.isNotEmpty) MarkerLayer(markers: markers),
               ],
             ),
-            // legenda flutuante
             Positioned(
               right: 12,
               bottom: 12,
