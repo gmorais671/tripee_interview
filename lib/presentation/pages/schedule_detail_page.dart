@@ -5,13 +5,64 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:tripee_interview/domain/entities/trip.dart';
 import 'package:tripee_interview/presentation/widgets/driver_avatar.dart';
-import 'package:tripee_interview/presentation/widgets/router_points.dart';
+import 'package:tripee_interview/presentation/widgets/route_points.dart';
 import 'package:tripee_interview/presentation/widgets/trip_map_widget.dart';
 import '../providers/global_providers.dart';
 
 class ScheduleDetailPage extends ConsumerWidget {
   final String scheduleId;
   const ScheduleDetailPage({super.key, required this.scheduleId});
+
+  Color _statusColor(String? status) {
+    final s = (status ?? '').toLowerCase();
+    switch (s) {
+      case 'completed':
+      case 'realized':
+      case 'realizada':
+      case 'realizado':
+        return Colors.green;
+      case 'cancelled':
+      case 'canceled':
+      case 'cancelada':
+        return Colors.red;
+      case 'in_progress':
+      case 'inprogress':
+      case 'in-progress':
+        return Colors.blue;
+      case 'confirmed':
+        return Colors.teal;
+      case 'pending':
+      case 'pendente':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _statusLabel(String? status) {
+    if (status == null || status.isEmpty) return '—';
+    final s = status.toLowerCase().replaceAll('-', '_').trim();
+    final map = {
+      'in_progress': 'Em andamento',
+      'inprogress': 'Em andamento',
+      'in-progress': 'Em andamento',
+      'completed': 'Realizada',
+      'realized': 'Realizada',
+      'realizada': 'Realizada',
+      'realizado': 'Realizada',
+      'cancelled': 'Cancelada',
+      'canceled': 'Cancelada',
+      'pending': 'Pendente',
+      'confirmed': 'Confirmado',
+    };
+
+    String humanize(String raw) {
+      final parts = raw.replaceAll('_', ' ').split(' ').where((p) => p.isNotEmpty).toList();
+      return parts.map((p) => p[0].toUpperCase() + (p.length > 1 ? p.substring(1) : '')).join(' ');
+    }
+
+    return map[s] ?? humanize(s);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,13 +90,15 @@ class ScheduleDetailPage extends ConsumerWidget {
         ? NetworkImage(trip.driver!.photo!)
         : null;
 
+    final statusLabel = _statusLabel(status);
+    final statusColor = _statusColor(status);
+
     return Scaffold(
       appBar: _buildAppBar(),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             // Mapa: usa TripMapWidget se tivermos coordenadas; senão mostra o placeholder cinza
             if (trip.start?.coordinates != null && trip.end?.coordinates != null) ...[
               TripMapWidget(
@@ -68,13 +121,19 @@ class ScheduleDetailPage extends ConsumerWidget {
 
             const SizedBox(height: 12),
 
-            // Status
+            // Status (agora human friendly e em Português)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(6)),
-                child: Text(status, style: const TextStyle(color: Color.fromARGB(255, 14, 90, 26))),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
 
@@ -86,7 +145,18 @@ class ScheduleDetailPage extends ConsumerWidget {
               originSubtitle: startAddress,
               destinationTitle: 'Destino - ${_formatDate(trip.endDate)}',
               destinationSubtitle: endAddress,
-              accentColor: const Color(0xFF1976D2), // opcional, padrão usa theme
+              accentColor: const Color(0xFF1976D2),
+              textColor: const Color(0xFF1976D2),
+              iconScale: 1.0,
+              iconColumnWidth: 48,
+              showConnector: true,
+              connectorSpacing: 40,
+              lineHeight: 24,
+              lineDashHeight: 4,
+              lineGap: 6,
+              lineStrokeWidth: 2,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              showSubtitle: true,
             ),
 
             const Divider(),
@@ -113,10 +183,6 @@ class ScheduleDetailPage extends ConsumerWidget {
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () => ref.read(scheduleDetailNotifierProvider(scheduleId).notifier).refresh(),
-      //   child: const Icon(Icons.refresh),
-      // ),
     );
   }
 
@@ -153,7 +219,6 @@ class ScheduleDetailPage extends ConsumerWidget {
   }
 
   Widget _buildPoliciesAndRating(Trip trip) {
-
     // Dados defensivos
     const String justificationLabel = 'Justificativa';
     const String justificationValue = 'Fornecedor';

@@ -23,11 +23,25 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tripee Interview',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData().copyWith(
+        colorScheme: ThemeData().colorScheme.copyWith(surface: const Color(0xFF1976D2)),
+        // fundo leve do app
+        scaffoldBackgroundColor: const Color.fromARGB(255, 240, 240, 240),
+        appBarTheme: const AppBarTheme().copyWith(
+          backgroundColor: Colors.white,
+        ),
+        cardTheme: const CardThemeData().copyWith(
+          color: Colors.white,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+        ),
+      ),
       home: const SchedulesPage(),
     );
   }

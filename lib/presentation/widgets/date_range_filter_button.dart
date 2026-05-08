@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import '../providers/global_providers.dart'; // ajuste o caminho se necessário
 
+const Color kPrimaryColor = Color(0xFF1976D2);
+
 class DateRangeFilterButton extends ConsumerStatefulWidget {
   final Future<void> Function(DateTime? start, DateTime? end) onApply;
   final String label;
@@ -150,36 +152,45 @@ class _DateRangeFilterButtonState extends ConsumerState<DateRangeFilterButton> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       child: SfDateRangePicker(
-                        selectionMode: DateRangePickerSelectionMode.range,
-                        initialSelectedRange: _initialRange(),
-                        minDate: firstDate,
-                        maxDate: lastDate,
-                        monthViewSettings: const DateRangePickerMonthViewSettings(
-                          firstDayOfWeek: 1, // optional: start week on Monday
-                        ),
-                        headerStyle: const DateRangePickerHeaderStyle(
-                          textAlign: TextAlign.center,
-                          textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                        onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-                          if (args.value is PickerDateRange) {
-                            final range = args.value as PickerDateRange;
-                            setState(() {
-                              start = range.startDate != null
-                                  ? DateTime(range.startDate!.year, range.startDate!.month, range.startDate!.day)
-                                  : null;
-                              end = range.endDate != null
-                                  ? DateTime(range.endDate!.year, range.endDate!.month, range.endDate!.day)
-                                  : null;
-                            });
-                          }
-                        },
-                        rangeSelectionColor: Theme.of(context).primaryColor.withOpacity(0.16),
-                        rangeTextStyle: TextStyle(color: Theme.of(context).primaryColor),
-                        startRangeSelectionColor: Theme.of(context).primaryColor,
-                        endRangeSelectionColor: Theme.of(context).primaryColor,
-                        showActionButtons: false,
+                      selectionMode: DateRangePickerSelectionMode.range,
+                      initialSelectedRange: _initialRange(),
+                      minDate: firstDate,
+                      maxDate: lastDate,
+                      monthViewSettings: const DateRangePickerMonthViewSettings(
+                        firstDayOfWeek: 1,
                       ),
+                      headerStyle: const DateRangePickerHeaderStyle(
+                        textAlign: TextAlign.center,
+                        textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+                        if (args.value is PickerDateRange) {
+                          final range = args.value as PickerDateRange;
+                          setState(() {
+                            start = range.startDate != null
+                                ? DateTime(range.startDate!.year, range.startDate!.month, range.startDate!.day)
+                                : null;
+                            end = range.endDate != null
+                                ? DateTime(range.endDate!.year, range.endDate!.month, range.endDate!.day)
+                                : null;
+                          });
+                        }
+                      },
+
+                      // aqui usamos a cor fixa desejada
+                      rangeSelectionColor: kPrimaryColor.withOpacity(0.16),
+                      rangeTextStyle: const TextStyle(color: kPrimaryColor),
+                      startRangeSelectionColor: kPrimaryColor,
+                      endRangeSelectionColor: kPrimaryColor,
+
+                      // garante contraste do número da data quando selecionada
+                      selectionTextStyle: const TextStyle(color: Colors.white),
+
+                      // opcional: destaque do dia atual
+                      todayHighlightColor: kPrimaryColor,
+
+                      showActionButtons: false,
+                    ),
                     ),
                   ),
                   // Bottom ações (Voltar / Salvar)
@@ -190,7 +201,7 @@ class _DateRangeFilterButtonState extends ConsumerState<DateRangeFilterButton> {
                       children: [
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Voltar'),
+                          child: const Text('Voltar', style: TextStyle(color: kPrimaryColor),),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
@@ -198,7 +209,7 @@ class _DateRangeFilterButtonState extends ConsumerState<DateRangeFilterButton> {
                             _safeApply(start, end);
                             Navigator.of(ctx).pop();
                           },
-                          child: const Text('Salvar'),
+                          child: const Text('Salvar', style: TextStyle(color: kPrimaryColor),),
                         ),
                       ],
                     ),

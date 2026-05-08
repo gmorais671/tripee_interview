@@ -104,6 +104,7 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Histórico'),
         actions: [],
       ),
@@ -114,7 +115,7 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
           children: [
             // Date range filter button (sempre visível)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: DateRangeFilterButton(
                 onApply: (start, end) async {
                   await notifier.applyDateRange(start, end);
@@ -125,7 +126,7 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
 
             // Search field (sempre visível)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 12, 8),
               child: TextField(
                 controller: _searchController,
                 textInputAction: TextInputAction.search,
@@ -212,7 +213,7 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
 
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   itemCount: itemCount,
                   itemBuilder: (context, index) {
                     if (index < flattened.length) {
