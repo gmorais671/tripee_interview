@@ -72,12 +72,12 @@ Os modelos (DTOs) do projeto foram implementados com freezed e json_serializable
 
     Para regerar os arquivos .g.dart e .freezed.dart, execute:
 
-        ```bash
+        ```
         dart run build_runner build
     
 * Certifique-se de ter as seguintes dependências no pubspec.yaml:
 
-        ```bash
+        ```
         dependencies:
             freezed_annotation: ^2.x.x
             json_annotation: ^4.x.x
