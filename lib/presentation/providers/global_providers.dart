@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tripee_interview/core/utils/pagination.dart';
+import 'package:tripee_interview/presentation/providers/schedule_detail_notifier.dart';
 import 'package:tripee_interview/presentation/providers/schedules_notifier.dart';
 import '../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
@@ -40,3 +41,14 @@ final schedulesNotifierProvider = StateNotifierProvider<SchedulesNotifier, Sched
   final getSchedules = ref.read(getSchedulesProvider); 
   return SchedulesNotifier(getSchedules);
 });
+
+final scheduleDetailNotifierProvider =
+    StateNotifierProvider.autoDispose.family<ScheduleDetailNotifier, ScheduleDetailState, String>(
+  (ref, id) {
+    final getDetail = ref.read(getScheduleDetailProvider);
+    final notifier = ScheduleDetailNotifier(getDetail);
+    // carrega automáticamente
+    notifier.load(id);
+    return notifier;
+  },
+);
