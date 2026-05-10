@@ -341,7 +341,8 @@ class _TripMapWidgetState extends State<TripMapWidget> {
               children: [
                 // Use o template único para evitar alerta com subdomains do OSM
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.example.tripee_interview',
                 ),
                 if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
