@@ -16,6 +16,9 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
   final _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
+  bool _autoPrefetching = false;
+  bool _prefetchScheduled = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +34,48 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
     final pos = _scrollController.position.pixels;
     if (max - pos <= threshold) {
       ref.read(schedulesNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  void _scheduleAutoPrefetch() {
+    if (_prefetchScheduled || _autoPrefetching) return;
+
+    _prefetchScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prefetchScheduled = false;
+      if (!mounted) return;
+      _ensureListFillsViewport();
+    });
+  }
+
+  Future<void> _ensureListFillsViewport() async {
+    if (_autoPrefetching || !_scrollController.hasClients) return;
+
+    _autoPrefetching = true;
+
+    try {
+      while (mounted && _scrollController.hasClients) {
+        final state = ref.read(schedulesNotifierProvider);
+
+        if (state.isLoading || state.isLoadingMore || !state.hasMore) {
+          break;
+        }
+
+        final position = _scrollController.position;
+        final contentStillFits = position.maxScrollExtent <= position.viewportDimension;
+
+        if (!contentStillFits) {
+          break;
+        }
+
+        await ref.read(schedulesNotifierProvider.notifier).loadMore();
+
+        // Dá tempo para a UI recalcular o tamanho após o novo build
+        await Future<void>.delayed(const Duration(milliseconds: 16));
+      }
+    } finally {
+      _autoPrefetching = false;
     }
   }
 
@@ -211,6 +256,8 @@ class _SchedulesPageState extends ConsumerState<SchedulesPage> {
                 final flattened = _flattenWithHeaders(state.items);
                 final itemCount = flattened.length + (state.isLoadingMore ? 1 : 0);
 
+                _scheduleAutoPrefetch();
+                
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
